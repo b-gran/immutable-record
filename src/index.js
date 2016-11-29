@@ -7,7 +7,6 @@ import FieldValue from './FieldValue';
  * @param shape
  * @param name
  * @return {Record}
- * @constructor
  */
 function ImmutableRecord (shape, name) {
   if (!shapeHasFields(shape)) {
@@ -25,10 +24,10 @@ function ImmutableRecord (shape, name) {
   const privates = new WeakMap();
 
   // Initialize accessors function so we can add accessors to records
-  const accessors = getAccessorsForShape(fieldValues);
+  const accessors = bindAccessors(fieldValues);
 
   // Initialize defaults function so we can clean input.
-  const defaults = useRecordDefaults(fieldValues);
+  const defaults = bindRecordDefaults(fieldValues);
 
   // Create a class with this specific shape
   function Record (values) {
@@ -51,9 +50,7 @@ function ImmutableRecord (shape, name) {
    * @return {Record}
    */
   Record.prototype.set = function (property, newValue) {
-    if (!(property in fieldValues)) {
-      throw new Error(`"${property}" is not a valid field.`)
-    }
+    assertValidProperty(fieldValues, property);
 
     return new Record(
       update(
@@ -64,7 +61,46 @@ function ImmutableRecord (shape, name) {
     )
   };
 
+  /**
+   * Immutably remove a property from this record. Specifically, returns a new Record identical
+   * to this Record, except with no value at `property`.
+   *
+   * If the Record has a default value, the returned Record will have the default value at the
+   * removed property.
+   *
+   * Attempting to remove a required property will throw.
+   *
+   * @param {String} property - the property to remove
+   * @return {Record}
+   */
+  Record.prototype.remove = function (property) {
+    assertValidProperty(fieldValues, property);
+
+    return new Record(
+      _.omit(
+        privates.get(this),
+        [ property ]
+      )
+    )
+  };
+
   return Record;
+}
+
+/**
+ * Given a Record shape and a property name, returns true if the property is in the shape and
+ * throws otherwise.
+ *
+ * @param {{}.<FieldValue>} fieldValues - the shape of the Record
+ * @param {String} property - the property name
+ * @return {boolean}
+ */
+function assertValidProperty (fieldValues, property) {
+  if (!(property in fieldValues)) {
+    throw new Error(`"${property}" is not a valid field.`)
+  }
+
+  return true;
 }
 
 /**
@@ -76,7 +112,7 @@ function ImmutableRecord (shape, name) {
  * @param {{}.<FieldValue>} fieldValues - the shape of the Record
  * @return {function({}): {}}
  */
-function useRecordDefaults (fieldValues) {
+function bindRecordDefaults (fieldValues) {
   // Store the defaults and keys in a closure
   const recordDefaults = getDefaults(fieldValues);
   const validKeys = Object.keys(fieldValues);
@@ -122,7 +158,7 @@ function getDefaults (fieldValues) {
  * @param {Object} recordShape - shape of the record
  * @return {function(Object): Object}
  */
-function getAccessorsForShape (recordShape) {
+function bindAccessors (recordShape) {
   return recordValues => {
     return _.reduce(
       Object.keys(recordShape),
