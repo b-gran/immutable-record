@@ -7,6 +7,8 @@ import FieldValue from './FieldValue';
  * @param shape
  * @param name
  * @return {Record}
+ *
+ * TODO: name isn't used -- see immutable.Record
  */
 function ImmutableRecord (shape, name) {
   if (!shapeHasFields(shape)) {
@@ -15,7 +17,7 @@ function ImmutableRecord (shape, name) {
 
   // Convert each of the value definitions to FieldValue:s.
   // Note: this will throw if any of the definitions are invalid.
-  const fieldValues = _.mapValues(
+  const recordShape = _.mapValues(
     shape,
     valueDefinition => new FieldValue(valueDefinition)
   );
@@ -23,16 +25,24 @@ function ImmutableRecord (shape, name) {
   // A store for private variables
   const privates = new WeakMap();
 
+  // TODO: create a RecordShape class to encapsulate all of this functionality
+
   // Initialize accessors function so we can add accessors to records
-  const accessors = bindAccessors(fieldValues);
+  const accessors = bindAccessors(recordShape);
 
   // Initialize defaults function so we can clean input.
-  const defaults = bindRecordDefaults(fieldValues);
+  const defaults = bindRecordDefaults(recordShape);
+
+  // Initialize input validation function.
+  const validateInput = bindValidateInput(recordShape);
 
   // Create a class with this specific shape
   function Record (values) {
     // Clean input & add defaults
     const cleanInput = defaults(values);
+
+    // Validate
+    validateInput(cleanInput);
 
     // Store private vars
     privates.set(this, cleanInput);
@@ -50,7 +60,7 @@ function ImmutableRecord (shape, name) {
    * @return {Record}
    */
   Record.prototype.set = function (property, newValue) {
-    assertValidProperty(fieldValues, property);
+    assertValidProperty(recordShape, property);
 
     return new Record(
       update(
@@ -74,8 +84,9 @@ function ImmutableRecord (shape, name) {
    * @return {Record}
    */
   Record.prototype.remove = function (property) {
-    assertValidProperty(fieldValues, property);
+    assertValidProperty(recordShape, property);
 
+    // TODO: better way to do this?
     return new Record(
       _.omit(
         privates.get(this),
@@ -88,38 +99,22 @@ function ImmutableRecord (shape, name) {
 }
 
 /**
- * Given a Record shape and a property name, returns true if the property is in the shape and
- * throws otherwise.
- *
- * @param {{}.<FieldValue>} fieldValues - the shape of the Record
- * @param {String} property - the property name
- * @return {boolean}
- */
-function assertValidProperty (fieldValues, property) {
-  if (!(property in fieldValues)) {
-    throw new Error(`"${property}" is not a valid field.`)
-  }
-
-  return true;
-}
-
-/**
  * Given the shape of a Record, returns a function that takes an input object and replaces
  * any fields that aren't present on the input with the Record's defaults.
  *
  * Also removes any fields from the input that aren't present on the shape.
  *
- * @param {{}.<FieldValue>} fieldValues - the shape of the Record
+ * @param {{}.<FieldValue>} recordShape - the shape of the Record
  * @return {function({}): {}}
  */
-function bindRecordDefaults (fieldValues) {
+function bindRecordDefaults (recordShape) {
   // Store the defaults and keys in a closure
-  const recordDefaults = getDefaults(fieldValues);
-  const validKeys = Object.keys(fieldValues);
+  const recordDefaults = getDefaults(recordShape);
+  const validKeys = Object.keys(recordShape);
 
-  return recordValues => {
+  return recordInput => {
     // Remove any invalid keys
-    const prunedValues = _.pick(recordValues, validKeys);
+    const prunedValues = _.pick(recordInput, validKeys);
 
     // Add defaults when a value is missing from the input
     return _.defaults(
@@ -130,19 +125,83 @@ function bindRecordDefaults (fieldValues) {
 }
 
 /**
+ * Given a record shape, returns a function that accepts record values and returns accessors
+ * for the record properties that are present on the shape.
+ *
+ * @param {Object} recordShape - shape of the record
+ * @return {function(Object): Object}
+ */
+function bindAccessors (recordShape) {
+  return recordInput => {
+    return _.reduce(
+      Object.keys(recordShape),
+      (properties, fieldName) => {
+        // The property should only be enumerable if it's present on the underlying record value.
+        const isEnumerable = fieldName in recordInput;
+
+        // Create a getter for this specific fieldName & value.
+        // The setter for this property will throw.
+        const getter = {
+          [fieldName]: createAccessorWithValue(recordInput[fieldName], isEnumerable)
+        };
+
+        // Add it to the properties object.
+        return _.assign(properties, getter);
+      },
+      {}
+    )
+  }
+}
+
+/**
+ * Given a record shape, returns a function that accepts record values and throws if the record
+ * values don't validate according to the shape.
+ *
+ * @param {Object} recordShape - shape of the record
+ * @return {function(Object): void}
+ */
+function bindValidateInput (recordShape) {
+  // TODO: could be inefficient
+  return recordInput => {
+    Object.keys(recordShape).forEach(
+      fieldName => {
+        const fieldValue = recordShape[fieldName];
+        const inputValue = recordInput[fieldName];
+
+        // Check for required fields
+        if (fieldValue.required && !(fieldName in recordInput)) {
+          throw new Error(
+            `${fieldName} is missing from the record ${JSON.stringify(recordInput)}.`
+          );
+        }
+
+        // Check for correct fields
+        if (!fieldValue.isValid(inputValue)) {
+          throw new Error(
+            `The value at "${fieldName}" is invalid.`
+          );
+        }
+
+        // Otherwise succeed
+      }
+    )
+  }
+}
+
+/**
  * Given the shape of a record, return an object containing only the default values specified
  * for the record.
  *
  * If the record has no defaults specified, {} will be returned.
  *
- * @param {{}.<FieldValue>} fieldValues - shape of the Record
+ * @param {{}.<FieldValue>} recordShape - shape of the Record
  * @return {{}.<*>}
  */
-function getDefaults (fieldValues) {
+function getDefaults (recordShape) {
   return _.mapValues(
     // Only want fields that have a default value
     _.pickBy(
-      fieldValues,
+      recordShape,
       fieldValue => fieldValue.hasDefault()
     ),
 
@@ -151,34 +210,6 @@ function getDefaults (fieldValues) {
   )
 }
 
-/**
- * Given a record shape, returns a function that accepts record values and returns accessors
- * for the record properties that are present on the shape.
- *
- * @param {Object} recordShape - shape of the record
- * @return {function(Object): Object}
- */
-function bindAccessors (recordShape) {
-  return recordValues => {
-    return _.reduce(
-      Object.keys(recordShape),
-      (properties, fieldName) => {
-        // The property should only be enumerable if it's present on the underlying record value.
-        const isEnumerable = fieldName in recordValues;
-
-        // Create a getter for this specific fieldName & value.
-        // The setter for this property will throw.
-        const getter = {
-          [fieldName]: createAccessorWithValue(recordValues[fieldName], isEnumerable)
-        };
-
-        // Add it to the properties object.
-        return _.assign(properties, getter)
-      },
-      {}
-    )
-  }
-}
 
 /**
  * Given some value, return an accessor for that value.
@@ -197,7 +228,9 @@ function createAccessorWithValue (value, isEnumerable = true) {
   return {
     get: () => value,
 
-    // Throw on set
+    // Always throw on attempted set operations.
+    // This function has arity of one to comply with interpreter rules about setters,
+    // even though it won't ever use the argument.
     set: x => {
       throw new Error('Use the "set" function to update the values of an ImmutableRecord.')
     },
@@ -223,6 +256,7 @@ function update (object, field, value) {
   }
 
   return _.set(
+    // TODO: slow for large objects, maybe rethink this?
     _.cloneDeep(object),
     field,
     value
@@ -242,7 +276,25 @@ function update (object, field, value) {
  * @return {boolean}
  */
 function shapeHasFields (object) {
+  // TODO: should be handled by RecordShape
   return _.isPlainObject(object) && Object.keys(object).length > 0;
 }
+
+/**
+ * Given a Record shape and a property name, returns true if the property is in the shape and
+ * throws otherwise.
+ *
+ * @param {{}.<FieldValue>} recordShape - the shape of the Record
+ * @param {String} property - the property name
+ * @return {boolean}
+ */
+function assertValidProperty (recordShape, property) {
+  if (!(property in recordShape)) {
+    throw new Error(`"${property}" is not a valid field.`)
+  }
+
+  return true;
+}
+
 
 export default ImmutableRecord;
