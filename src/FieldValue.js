@@ -72,20 +72,36 @@ class FieldValue {
   isValid (value) {
     const { type } = this.__definition;
 
-    switch (typeof type) {
-      // If the definition has no type, every value is valid.
-      case 'undefined':
-        return true;
+    // Just checks validity against the definition's type.
+    function matchesType () {
+      switch (typeof type) {
+        // If the definition has no type, every value is valid.
+        case 'undefined':
+          return true;
 
-      // If type is a string, we just make sure 'typeof value' matches the type.
-      case 'string':
-        return typeof value === type;
+        // If type is a string, we just make sure 'typeof value' matches the type.
+        case 'string':
+          return typeof value === type;
 
-      // If type is a function (it's a validator function), we pass in value and
-      // return the result (coerced to a boolean).
-      case 'function':
-        return !!type(value);
+        // If type is a function (it's a validator function), we pass in value and
+        // return the result (coerced to a boolean).
+        case 'function':
+          return !!type(value);
+      }
     }
+
+    if (_.isUndefined(value)) {
+      return !this.required
+    }
+
+    // The value is required, but it wasn't provided.
+    if (this.required && _.isUndefined(value)) {
+      return false;
+    }
+
+    const notRequiredAndNotDefined = !this.required && _.isUndefined(value);
+
+    return ( notRequiredAndNotDefined || matchesType() );
   }
 }
 
