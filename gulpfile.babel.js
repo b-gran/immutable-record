@@ -133,7 +133,7 @@ gulp.task('clean', clean);
 gulp.task('babel:dev', (done) => {
     gulp.src(config.src)
         .pipe(plumber(mapError))
-        .pipe(cache('babel'))
+        .pipe(cache('babel:dev'))
         .pipe(sourcemaps.init())
         .pipe(babel())
         .pipe(sourcemaps.write('.', { sourceRoot: config.srcRoot }))
@@ -145,7 +145,7 @@ gulp.task('babel:dev', (done) => {
 gulp.task('babel:production', (done) => {
     gulp.src(config.src)
         .pipe(plumber(mapError))
-        .pipe(cache('babel'))
+        .pipe(cache('babel:production'))
         .pipe(babel())
         .pipe(uglify())
         .pipe(gulp.dest('dist/'))
