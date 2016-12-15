@@ -73,9 +73,12 @@ const config = {
         bundlePath: path.join('dist', pjson.main),
     },
 
-    // Babel compilation options
+    // Babel compilation options for rollup
     optsBabel: {
-        presets: [ 'es2015', 'react', 'stage-0' ]
+        babelrc: false,
+        presets: [
+          [ 'es2015', { modules: false } ]
+        ],
     },
 };
 
@@ -227,12 +230,9 @@ gulp.task('bundle:npm', done => {
         // Don't combine npm deps
         external: _.keys(pjson.dependencies),
 
-        // Use babel, ignore the babelrc
+        // Use babel
         plugins: [
-            rollupBabel({
-                babelrc: false,
-                presets: config.optsBabel,
-            }),
+          rollupBabel(config.optsBabel),
         ],
     }).then(bundle => {
         // bundle with CommonJS es5 output
