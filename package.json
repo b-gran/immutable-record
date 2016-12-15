@@ -4,7 +4,8 @@
   "description": "Create immutable records a-la `Record` in Facebook's Immutable.js",
   "main": "index.js",
   "scripts": {
-    "test": "mocha src/test/mocha --compilers js:babel-core/register"
+    "test": "jest",
+    "build": "gulp production"
   },
   "repository": {
     "type": "git",
@@ -18,10 +19,11 @@
   "homepage": "https://github.com/b-gran/immutable-record#readme",
   "devDependencies": {
     "async": "^2.0.1",
+    "babel-jest": "^17.0.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.18.0",
     "babel-preset-es2015": "^6.14.0",
     "babel-preset-es2015-rollup": "^1.2.0",
-    "babel-preset-react": "^6.11.1",
-    "babel-preset-stage-0": "^6.5.0",
+    "babel-register": "^6.18.0",
     "babelify": "^7.3.0",
     "browserify": "^13.1.0",
     "chai": "^3.5.0",
@@ -38,6 +40,7 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-uglify": "^2.0.0",
     "gulp-util": "^3.0.7",
+    "jest": "^17.0.3",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
     "run-sequence": "^1.2.2",
