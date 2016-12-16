@@ -1,7 +1,9 @@
 import FieldValue from '../src/FieldValue';
 
 describe('FieldValue', () => {
+
   /*
+   * Check for the presence of a static class property called "Defaults".
    * Other tests depend on FieldValue.Defaults .
    */
   it(`exposes default definition values as a static class property`, () => {
@@ -9,6 +11,10 @@ describe('FieldValue', () => {
   });
 
   describe('constructor', () => {
+
+    /*
+     * Note: this test directly accesses the internal of FieldValue representation.
+     */
     it('creates a FieldValue with defaults if the definition is null or the empty object', () => {
       expect(new FieldValue(null).__definition).toEqual(FieldValue.Defaults);
       expect(new FieldValue({}).__definition).toEqual(FieldValue.Defaults);
