@@ -35,6 +35,7 @@ class FieldValue {
 
     // Store the definition, substituting in defaults if they're not specified.
     this.__definition = _.defaults(
+      {},
       definition || {},
       FieldValue.Defaults
     );
