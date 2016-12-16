@@ -122,6 +122,7 @@ FieldValue.Defaults = {
   // default: undefined,
 };
 
+// TODO: This structure is bad & ugly. Do something better!
 const Definition = {
   ALLOWED_KEYS: [
     'type', 'required', 'enumerable', 'default'
