@@ -1,5 +1,13 @@
 import FieldValue from '../src/FieldValue';
 
+function stringify (obj) {
+  try {
+    return JSON.stringify(obj);
+  } catch (err) {
+    return Object.prototype.toString.call(obj);
+  }
+}
+
 describe('FieldValue', () => {
 
   /*
@@ -20,26 +28,42 @@ describe('FieldValue', () => {
       expect(new FieldValue({}).__definition).toEqual(FieldValue.Defaults);
     });
 
-    /**
-     * Given a FieldValue definition, expect construction of a FieldValue with that
-     * definition to throw.
-     *
-     * @param {Object} definition
-     */
-    function expectInvalidDefinition (definition) {
-      expect(() => new FieldValue(definition)).toThrow();
-    }
+    expect.extend({
+
+      /**
+       * Given a FieldValue definition, expect construction of a FieldValue with that
+       * definition to throw.
+       *
+       * @param {Object} receivedDefinition
+       */
+      toBeInvalidDefinition (receivedDefinition) {
+        try {
+          // The constructor should fail.
+          new FieldValue(receivedDefinition);
+
+          // If it succeeds, fail the test.
+          return {
+            pass: false,
+            message: `Expected (new FieldValue(${stringify(receivedDefinition)})) to throw.`
+          };
+        } catch (error) {
+          return {
+            pass: true
+          };
+        }
+      }
+    });
 
     it(`throws if the FieldValue definition is non-null and not a plain object`, () => {
-      expectInvalidDefinition(undefined);
-      expectInvalidDefinition(5);
-      expectInvalidDefinition('');
+      expect(undefined).toBeInvalidDefinition();
+      expect(5).toBeInvalidDefinition();
+      expect('').toBeInvalidDefinition();
     });
 
     it(`throws if the FieldValue definition contains any non-allowed keys`, () => {
-      expectInvalidDefinition({ invalid: null });
-      expectInvalidDefinition({ foo: null, bar: null });
-      expectInvalidDefinition({ type: 'string', 'Type': 'bad' });
+      expect({ invalid: null }).toBeInvalidDefinition();
+      expect({ foo: null, bar: null }).toBeInvalidDefinition();
+      expect({ type: 'string', 'Type': 'bad' }).toBeInvalidDefinition();
     });
 
     /*
@@ -49,49 +73,64 @@ describe('FieldValue', () => {
      */
     it(`throws if "type" is invalid`, () => {
       // Not a _valid_ type string.
-      expectInvalidDefinition({ type: 'nottypestring' });
+      expect({ type: 'nottypestring' }).toBeInvalidDefinition();
 
       // Not a string.
-      expectInvalidDefinition({ type: {} });
+      expect({ type: {} }).toBeInvalidDefinition();
 
       // Function has arity > 1.
-      expectInvalidDefinition({ type: function tooLong (a, b) {} });
+      expect({ type: function tooLong (a, b) {} }).toBeInvalidDefinition();
 
       // Function has arity < 1
-      expectInvalidDefinition({ type: function tooShort () {} });
+      expect({ type: function tooShort () {} }).toBeInvalidDefinition();
     });
 
     it(`throws if "required" is not a boolean`, () => {
-      expectInvalidDefinition({ required: 'true' });
-      expectInvalidDefinition({ required: 1 });
-      expectInvalidDefinition({ required: 0 });
+      expect({ required: 'true' }).toBeInvalidDefinition();
+      expect({ required: 1 }).toBeInvalidDefinition();
+      expect({ required: 0 }).toBeInvalidDefinition();
     });
 
     it(`throws if "enumerable" is not a boolean`, () => {
-      expectInvalidDefinition({ enumerable: 'true' });
-      expectInvalidDefinition({ enumerable: 1 });
-      expectInvalidDefinition({ enumerable: 0 });
+      expect({ enumerable: 'true' }).toBeInvalidDefinition();
+      expect({ enumerable: 1 }).toBeInvalidDefinition();
+      expect({ enumerable: 0 }).toBeInvalidDefinition();
     });
   });
 
   describe('hasDefault()', () => {
-    /**
-     * Given a FieldValue definition, expects the FieldValue with that definition to have
-     * a default.
-     *
-     * @param {Object} definition
-     */
-    function expectDefault (definition) {
-      expect(
-        (new FieldValue(definition)).hasDefault()
-      ).toEqual(true);
-    }
+    expect.extend({
+
+      /**
+       * Given a FieldValue definition, expects the FieldValue with that definition to have
+       * a default value.
+       *
+       * @param {Object} receivedDefinition
+       */
+      toHaveDefaultInDefinition (receivedDefinition) {
+        try {
+          const fieldValueHasDefault = (
+            new FieldValue(receivedDefinition)
+          ).hasDefault();
+
+          return {
+            pass: fieldValueHasDefault,
+            message: `Expected (new FieldValue(${stringify(receivedDefinition)})) to have a default value.`
+          }
+        } catch (err) {
+          return {
+            pass: false,
+            message: `Expected (new FieldValue(${stringify(receivedDefinition)})) to be a valid definition.`
+          }
+        }
+      }
+    });
 
     it(`returns true if the FieldValue has a default`, () => {
-      expectDefault({ default: 'foo' });
+      expect({ default: 'foo' }).toHaveDefaultInDefinition();
 
       // undefined is a legal default value
-      expectDefault({ default: undefined });
+      expect({ default: undefined }).toHaveDefaultInDefinition();
     });
 
     it(`returns false if the FieldValue has no default`, () => {
