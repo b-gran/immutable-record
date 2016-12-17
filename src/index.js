@@ -7,8 +7,6 @@ import FieldValue from './FieldValue';
  * @param shape
  * @param name
  * @return {Record}
- *
- * TODO: name isn't used -- see immutable.Record
  */
 function ImmutableRecord (shape, name) {
   if (!shapeHasFields(shape)) {
@@ -50,6 +48,16 @@ function ImmutableRecord (shape, name) {
     // Add accessors to self
     Object.defineProperties(this, accessors(cleanInput));
   }
+
+  // Update the record's name
+  Object.defineProperty(Record, 'name', {
+    // This is the default Function.name configuration
+    // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+    writable: false,
+    enumerable: false,
+    configurable: true,
+    value: name || 'Record'
+  });
 
   /**
    * Immutably update a property of this record. Specifically, returns a new Record identical
