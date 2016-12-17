@@ -115,7 +115,10 @@ describe('FieldValue', () => {
 
           return {
             pass: fieldValueHasDefault,
-            message: `Expected (new FieldValue(${stringify(receivedDefinition)})) to have a default value.`
+            message: (
+              `Expected (new FieldValue(${stringify(receivedDefinition)})) ` +
+              `to ${fieldValueHasDefault ? 'not ' : ''}have a default value.`
+            )
           }
         } catch (err) {
           return {
@@ -134,9 +137,7 @@ describe('FieldValue', () => {
     });
 
     it(`returns false if the FieldValue has no default`, () => {
-      expect(
-        (new FieldValue({})).hasDefault()
-      ).toEqual(false);
+      expect({}).not.toHaveDefaultInDefinition();
     });
   });
 
