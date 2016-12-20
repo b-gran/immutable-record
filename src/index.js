@@ -103,6 +103,21 @@ function ImmutableRecord (shape, name) {
     )
   };
 
+  function toString () {
+    const fields = Object
+      .keys(this)
+      .map(key => `  ${key}: ${JSON.stringify(this[key])}`)
+      .join(',\n');
+
+    return (
+      `${Record.name} {\n` +
+      fields + ` }`
+    );
+  }
+
+  Record.prototype.toString = toString;
+  Record.prototype.inspect = toString;
+
   return Record;
 }
 
