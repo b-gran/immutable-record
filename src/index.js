@@ -197,7 +197,7 @@ function bindValidateInput (recordShape) {
         if (fieldValue.required && !(fieldName in recordInput)) {
           // TODO: this warns with the cleaned up input, so you may not get useful info
           throw new Error(
-            `${fieldName} is missing from the record ${JSON.stringify(recordInput)}.`
+            `"${fieldName}" is missing from the record ${JSON.stringify(recordInput)}.`
           );
         }
 

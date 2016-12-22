@@ -84,15 +84,8 @@ describe('ImmutableRecord', () => {
  * ImmutableRecord function.
  */
 describe('Record', () => {
+
   describe(`constructor`, () => {
-    it(`throws if a required field is missing`, () => {
-      const RequiredRecord = ImmutableRecord({
-        requiredField: { required: true }
-      });
-
-      expect(() => new RequiredRecord({})).toThrowError(/requiredField is missing/);
-    });
-
     const recordSpec = {
       defaultField: { default: 'default value' },
       simpleType: { type: 'number' },
@@ -100,6 +93,14 @@ describe('Record', () => {
     };
 
     const Record = ImmutableRecord(recordSpec);
+
+    it(`throws if a required field is missing`, () => {
+      const RequiredRecord = ImmutableRecord({
+        requiredField: { required: true }
+      });
+
+      expect(() => new RequiredRecord({})).toThrowError(/"requiredField" is missing/);
+    });
 
     it(`uses default field values`, () => {
       const instance = new Record({});
@@ -144,6 +145,7 @@ describe('Record', () => {
       expect(keys).toHaveLength(1);
       expect(keys[0]).toBe('defaultField');
     });
+
   });
 
   describe(`accessors`, () => {
@@ -294,5 +296,132 @@ describe('Record', () => {
         }
       )).toThrowError(/Cannot redefine property: one/);
     });
+
+    it(`handles undefined as a value`, () => {
+      const instance = new Record({ one: undefined });
+
+      expect(instance).toHaveAccessorAt('one');
+      expect(instance.one).toBeUndefined();
+    });
+
+  });
+
+  describe(`set (property, newValue) -> Record`, () => {
+    const recordSpec = {
+      default: {
+        default: 'whatever'
+      },
+
+      complex: {
+        type: val => val > 5
+      }
+    };
+
+    const Record = ImmutableRecord(recordSpec);
+
+    it(`throws if the property wasn't specified in the Record`, () => {
+      const instance = new Record();
+
+      const notSpecified = 'notSpecified';
+      expect(
+        () => instance.set(notSpecified, 'whatever')
+      ).toThrowError(new RegExp(`"${notSpecified}" is not a valid field`));
+    });
+
+    it(`throws if the new value fails validation`, () => {
+      const instance = new Record();
+
+      expect(
+        () => instance.set('complex', 5)
+      ).toThrowError(/The value at "complex" is invalid/);
+    });
+
+    it(`returns a new Record with the property set to the new value`, () => {
+      const instance = new Record();
+      expect(instance.complex).toBeUndefined();
+      expect(instance).not.toHaveAccessorAt('complex');
+
+      const updated = instance.set('complex', 6);
+      expect(updated).toBeInstanceOf(Record);
+      expect(updated).toHaveAccessorAt('complex');
+      expect(updated.complex).toBe(6);
+      expect(updated).toHaveAccessorAt('default');
+      expect(updated.default).toBe(recordSpec.default.default);
+    });
+
+  });
+
+  describe(`remove (property) -> Record`, () => {
+    const recordSpec = {
+      default: {
+        default: 'whatever'
+      },
+
+      complex: {
+        type: val => val > 5
+      }
+    };
+
+    const Record = ImmutableRecord(recordSpec);
+
+    it(`throws if the property wasn't specified in the Record`, () => {
+      const instance = new Record();
+
+      const notSpecified = 'notSpecified';
+      expect(
+        () => instance.set(notSpecified, 'whatever')
+      ).toThrowError(new RegExp(`"${notSpecified}" is not a valid field`));
+    });
+
+    it(`throws if the removed property was required`, () => {
+      const RequiredRecord = ImmutableRecord({
+        required: {
+          required: true
+        }
+      });
+
+      const instance = new RequiredRecord({ required: 'whatever' });
+      expect(() => instance.remove('required')).toThrowError(
+        /"required" is missing from the record/
+      )
+    });
+
+    it(`replaces the property with the default, if a default is specified`, () => {
+      const instance = new Record({ default: 'not the default' });
+      expect(instance.default).not.toBe(recordSpec.default.default);
+
+      const updated = instance.remove('default');
+      expect(updated.default).toBe(recordSpec.default.default);
+    });
+
+  });
+
+  describe(`toString() -> String`, () => {
+
+    it(`contains all of the keys and values`, () => {
+      const Record = ImmutableRecord({
+        one: {},
+        two: {}
+      });
+
+      const instance = new Record({
+        one: 'foo',
+        two: 'bar'
+      });
+
+      const string = instance.toString();
+
+      // Matches any characters, across newlines
+      const any = '(?:.|[^])*';
+
+      // Matches /one foo two bar/ in order with any characters in between.
+      const matchInstance = new RegExp([
+        'one', 'foo',
+        'two', 'bar'
+      ].join(any));
+
+      expect(string).toMatch(matchInstance);
+    });
+
   });
 });
