@@ -159,13 +159,15 @@ function bindAccessors (recordShape) {
     return _.reduce(
       Object.keys(recordShape),
       (properties, fieldName) => {
-        // The property should only be enumerable if it's present on the underlying record value.
-        const isEnumerable = fieldName in recordInput;
+        // Only create an accessor for the property if it's present on the input.
+        if (!(fieldName in recordInput)) {
+          return properties;
+        }
 
         // Create a getter for this specific fieldName & value.
         // The setter for this property will throw.
         const getter = {
-          [fieldName]: createAccessorWithValue(recordInput[fieldName], isEnumerable)
+          [fieldName]: createAccessorWithValue(recordInput[fieldName], true)
         };
 
         // Add it to the properties object.
@@ -193,6 +195,7 @@ function bindValidateInput (recordShape) {
 
         // Check for required fields
         if (fieldValue.required && !(fieldName in recordInput)) {
+          // TODO: this warns with the cleaned up input, so you may not get useful info
           throw new Error(
             `${fieldName} is missing from the record ${JSON.stringify(recordInput)}.`
           );
@@ -259,6 +262,7 @@ function createAccessorWithValue (value, isEnumerable = true) {
     },
 
     enumerable: isEnumerable,
+    configurable: false
   }
 }
 
