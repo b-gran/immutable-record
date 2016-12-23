@@ -73,36 +73,13 @@ class FieldValue {
   isValid (value) {
     const { type } = this.__definition;
 
-    // Just checks validity against the definition's type.
-    function matchesType () {
-      switch (typeof type) {
-        // If the definition has no type, every value is valid.
-        case 'undefined':
-          return true;
-
-        // If type is a string, we just make sure 'typeof value' matches the type.
-        case 'string':
-          return typeof value === type;
-
-        // If type is a function (it's a validator function), we pass in value and
-        // return the result (coerced to a boolean).
-        case 'function':
-          return !!type(value);
-      }
-    }
-
+    // An undefined value is valid if the FieldValue isn't required.
     if (_.isUndefined(value)) {
-      return !this.required
+      return !this.required;
     }
 
-    // The value is required, but it wasn't provided.
-    if (this.required && _.isUndefined(value)) {
-      return false;
-    }
-
-    const notRequiredAndNotDefined = !this.required && _.isUndefined(value);
-
-    return ( notRequiredAndNotDefined || matchesType() );
+    // If the value is defined, we just need to check it against the type.
+    return isValidForType(type, value);
   }
 }
 
@@ -122,6 +99,40 @@ FieldValue.Defaults = {
   // ('default' in FieldValue.Defaults) returns false
   // default: undefined,
 };
+
+/**
+ * Given a type and some potential value, returns true if the value is a valid
+ * instance of the type.
+ *
+ * @param {String|Function|undefined} type - type of the value
+ * @param {*} value - the value to check
+ * @return {boolean}
+ */
+function isValidForType (type, value) {
+  switch (typeof type) {
+    // If the definition has no type, every value is valid.
+    case 'undefined':
+      return true;
+
+    // If type is a string, we just make sure 'typeof value' matches the type.
+    case 'string':
+      return typeof value === type;
+
+    // If type is a function (it's a validator function), we pass in value and
+    // return the result (coerced to a boolean).
+    case 'function':
+      return !!type(value);
+
+    default:
+      throw new Error(`The type ${type} is not a valid type definition.`);
+  }
+}
+
+/**
+ * Returns true if the supplied value is not undefined.
+ * @type {function(*): Boolean}
+ */
+const isDefined = _.negate(_.isUndefined);
 
 // TODO: This structure is bad & ugly. Do something better!
 const Definition = {
@@ -147,7 +158,10 @@ const Definition = {
     }
 
     if (!_.isPlainObject(definition)) {
-      throw new Error(`A FieldValue definition must be either null or a plain object, but got ${Object.prototype.toString.call(definition)}`);
+      throw new Error(
+        `A FieldValue definition must be either null or a plain object, but got ` +
+        `${Object.prototype.toString.call(definition)}`
+      );
     }
 
     // Does the definition use any keys that aren't specifically allowed?
@@ -164,7 +178,7 @@ const Definition = {
     }
 
     // Make sure each of the allowed keys is valid.
-    return Definition.ALLOWED_KEYS.reduce(
+    Definition.ALLOWED_KEYS.reduce(
       (definitionIsValid, keyName) => {
         const propertyValue = definition[keyName];
         const keyIsValid = (
@@ -175,7 +189,20 @@ const Definition = {
         return definitionIsValid && keyIsValid;
       },
       true
-    )
+    );
+
+    // If a type and default aren't both specified, we're done and the definition is valid.
+    if (_.isUndefined(definition.type) || _.isUndefined(definition.default)) {
+      return true;
+    }
+
+    // If a type and default are both specified, we need to make sure the default validates
+    // against the type.
+    if (!isValidForType(definition.type, definition.default)) {
+      throw new Error('The default value is not valid according to the type.');
+    }
+
+    return true;
   },
 
   /**

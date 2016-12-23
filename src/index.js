@@ -204,7 +204,7 @@ function bindValidateInput (recordShape) {
         // Check for correct fields
         if (!fieldValue.isValid(inputValue)) {
           throw new Error(
-            `The value at "${fieldName}" is invalid.`
+            `The value ${JSON.stringify(inputValue)} at "${fieldName}" is invalid.`
           );
         }
 

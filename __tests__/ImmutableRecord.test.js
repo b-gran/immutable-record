@@ -57,6 +57,15 @@ describe('ImmutableRecord', () => {
       expect(() => ImmutableRecord({})).toThrowError(/plain object/i);
     });
 
+    it(`throws if any default values fail validation`, () => {
+      expect(() => ImmutableRecord({
+        foo: {
+          type: 'string',
+          default: { not: 'a string' }
+        }
+      })).toThrowError(/The default value is not valid according to the type/);
+    });
+
     it(`returns a Record class with set and remove methods`, () => {
       const RecordKlass = ImmutableRecord({ foo: null });
 
@@ -118,7 +127,7 @@ describe('Record', () => {
 
       expect(() => new Record({
         simpleType: 'string value'
-      })).toThrowError(/the value at "simpleType" is invalid/i);
+      })).toThrowError(/the value "string value" at "simpleType" is invalid/i);
     });
 
     it(`enforces complex (validator func) field types`, () => {
@@ -131,7 +140,7 @@ describe('Record', () => {
 
       expect(() => new Record({
         complexType: 5
-      })).toThrowError(/the value at "complexType" is invalid/i);
+      })).toThrowError(/the value 5 at "complexType" is invalid/i);
     });
 
     it(`does not store unspecified values`, () => {
@@ -333,7 +342,7 @@ describe('Record', () => {
 
       expect(
         () => instance.set('complex', 5)
-      ).toThrowError(/The value at "complex" is invalid/);
+      ).toThrowError(/The value 5 at "complex" is invalid/);
     });
 
     it(`returns a new Record with the property set to the new value`, () => {
