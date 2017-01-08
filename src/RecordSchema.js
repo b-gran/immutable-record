@@ -76,16 +76,19 @@ class RecordSchema {
   applyDefaults (input) {
     const schema = privates.get(this);
 
-    return _.defaults(
-      input,
-      _.mapValues(
+    // Since the defaults don't change over the lifetime of the schema,
+    // we compute the defaults only once and then cache them.
+    if (!this.__schemaDefaults) {
+      this.__schemaDefaults = _.mapValues(
         _.pickBy(
           schema,
-          schemaValue => 'default' in schemaValue
+          schemaValue => _.has(schemaValue, 'default')
         ),
         _.property('default')
       )
-    );
+    }
+
+    return _.defaults(input, this.__schemaDefaults);
   }
 
   /**
