@@ -1,42 +1,7 @@
+import './shared';
+
 import ImmutableRecord from '../src/index';
 import _ from 'lodash';
-
-expect.extend({
-
-  /**
-   * Expects a given function to have a specific arity.
-   *
-   * Throws if the received value is a non-function or if the expected arity
-   * isn't a number.
-   *
-   * @param {Function} receivedFunction
-   * @param {Number} correctArity
-   */
-  toHaveArity (receivedFunction, correctArity) {
-    if (typeof correctArity !== 'number') {
-      throw new Error(
-        `The expected arity value passed to toHaveArity() should be a number, ` +
-        `but got ${Object.prototype.toString.call(correctArity)}`
-      );
-    }
-
-    if (typeof receivedFunction !== 'function') {
-      throw new Error(
-        `The actual value passed to toHaveArity() should be a function, ` +
-        `but got ${Object.prototype.toString.call(receivedFunction)}`
-      );
-    }
-
-    const hasCorrectArity = receivedFunction.length === correctArity;
-
-    return {
-      pass: hasCorrectArity,
-      message: `expected the arity ${receivedFunction.length} to ` +
-      `${ hasCorrectArity ? 'not ' : '' }be ${correctArity}`
-    };
-  }
-
-});
 
 /*
  * Tests for the top-level API itself, not the Record class returned by the
@@ -433,4 +398,65 @@ describe('Record', () => {
     });
 
   });
+
+  describe(`keys`, () => {
+
+    test(`Object.keys() returns keys for values present on the record`, () => {
+      const Record = ImmutableRecord({
+        one: {},
+        two: {}
+      });
+
+      const instance = new Record({
+        one: 'foo',
+      });
+
+      expect(Object.keys(instance)).toBeSameSet([ 'one' ]);
+    });
+
+    const ConflictingRecord = ImmutableRecord({
+      set: {},
+      remove: {}
+    });
+
+    const conflictingInstance = new ConflictingRecord({
+      set: '',
+      remove: ''
+    });
+
+    // NOTE:
+    //    this test documents the current behavior of key names that conflict
+    //    with functions on the Record prototype.
+    //
+    // If you're reading this test and wondering what to do if you need to
+    // have key names that conflict with the prototype, see the next test below.
+    test(`key names that conflict with prototype functions`, () => {
+      expect(Object.keys(conflictingInstance)).toBeSameSet([ 'set', 'remove' ]);
+      expect(_.isString(conflictingInstance.set)).toBeTruthy();
+      expect(_.isString(conflictingInstance.remove)).toBeTruthy();
+    });
+
+    // Workaround: call the functions directly from the prototype, using a
+    // record instance for the "this" value.
+    test(`workaround for keys that conflict with prototype functions`, () => {
+      const set = (record, keyName, value) => {
+        return ConflictingRecord.prototype.set.call(record, keyName, value);
+      };
+
+      const remove = (record, keyName) => {
+        return ConflictingRecord.prototype.remove.call(record, keyName);
+      };
+
+      const itWorks = 'it works!';
+      expect(
+        set(conflictingInstance, 'set', itWorks).set
+      ).toEqual(itWorks);
+
+      expect(
+        remove(conflictingInstance, 'set').set
+      ).toBeInstanceOf(Function);
+    });
+
+  });
+
 });
