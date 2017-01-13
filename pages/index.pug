@@ -1,0 +1,106 @@
+html
+  head
+    title immutable-record -- typed & immutable plain JS objects
+    link(rel='stylesheet', href='style.css')
+    link(rel='stylesheet', href='prism.css')
+    link(href="https://fonts.googleapis.com/css?family=Bungee+Shade|Nunito+Sans", rel="stylesheet")
+    link(href="https://fonts.googleapis.com/css?family=Amatic+SC", rel="stylesheet")
+
+  body
+    header
+      h1.intro immutable-record &nbsp;&mdash; &nbsp; plain immutable Javascript objects with validation
+
+      div.main
+
+        p
+          code.start immutable-record
+          | is a small JavaScript library inspired by Facebook's ImmutableJS
+          | that allows you to create immutable
+          code.end Records
+          |.
+          code Records
+          | behave very much like Objects (even
+          code.end Object.keys()
+          | ), but they are immutable and have automatic type validation.
+
+        h3 What does it look like?
+
+        div.splash-examples
+          pre
+            code.language-javascript.
+              // ImmutableRecord() returns a Record class
+              import ImmutableRecord from 'immutable-record'
+              const Record = ImmutableRecord({
+                foo: { default: 5 },
+                optional: { type: 'number' }
+                someField: {
+                  type: value => 'foo' in value,
+                  required: true
+                },
+              })
+
+              // You just pass ordinary objects to the Record constructor
+              const object = new Record({
+                someField: { foo: 'bar' }
+              })
+
+          pre
+            code.language-javascript.
+              // Defaults will be used if no value is provided
+              object.foo // 5
+
+              // Object.keys() works as if the Record was a normal Object
+              Object.keys(object) // [ 'foo', 'someField' ]
+
+              // Records are immutable, so Record#set() returns a new Record
+              const another = object.set('optional', 8)
+              another.optional // 8
+
+              // The original Record is unmodified
+              'optional' in object // false
+
+              // Validation happens automatically
+              object.remove('someField')
+              // Error: "someField" is missing from the record {"foo":5}
+
+        h3
+          | Why pick
+          code.end immutable-record
+          | ?
+
+        p
+          | Compared to ImmutableJS, the key feature is
+          b automatic validation.
+          | With
+          code.end immutable-record
+          | , you can specify the type of each field and they will be automatically checked.
+          | Additionally:
+          ul
+            li
+              code.start Object.keys()
+              | works just how you would expect
+            li
+              | You can mark fields as
+              code required
+            li
+              | You can create optional fields that may not be present on
+              | a record, but will validate when set.
+
+    section.getting-started
+      h1 Getting started
+
+      h2 Installing
+
+      p
+        code immutable-record
+        | is available on
+        code npm
+        | .
+
+      pre
+        code.
+          npm install immutable-record
+
+      h2
+
+    script(src='prism.js')

@@ -1,0 +1,64 @@
+body, html {
+  width: 100%;
+  margin: 0;
+  font-family: 'Nunito Sans', serif; }
+
+body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center; }
+
+.main {
+  max-width: 1100px;
+  margin: 0 auto; }
+
+header {
+  background: #424242;
+  color: #e8e7e3;
+  width: 100%;
+  padding-bottom: 40px; }
+  header h3 {
+    font-size: 1.5em; }
+
+h1, h2, h3, h4, h5, h6 {
+  text-shadow: 2px 2px black; }
+
+.intro {
+  margin: 0;
+  text-align: center;
+  padding: 10px 0;
+  font-family: 'Amatic SC', cursive;
+  font-size: 3em; }
+
+.splash-examples {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap; }
+  .splash-examples > pre[class*="language-"] {
+    padding: 1em 0.5em;
+    border-radius: 0; }
+  .splash-examples > * {
+    flex-grow: 1; }
+
+:not(pre) > code {
+  text-shadow: none;
+  border: 1px solid black;
+  border-radius: 4px;
+  background: white;
+  padding: 0 0.3em;
+  margin: 0 0.4em;
+  color: black; }
+  :not(pre) > code.start {
+    margin-left: 0; }
+  :not(pre) > code.end {
+    margin-right: 0; }
+
+p > b {
+  padding: 0 0.4em; }
+
+@media (max-width: 800px) {
+  .main {
+    padding: 0 0.5em; } }
+
+/*# sourceMappingURL=style.css.map */
