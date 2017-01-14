@@ -122,11 +122,11 @@ object.field // 5
   // setting the field equal to null works too
   alsoWorks: null
 })
-</code></pre><h3>Using Records</h3><p>Records mostly work just like normal Objects, except they're immutable.</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+</code></pre><h3>Using Records</h3><p>Records mostly work just like normal Objects, except they're immutable.</p><pre><code class="language-javascript">const ABCRecord = ImmutableRecord({
   a: {}, b: {}, c: {}
 })
 
-const object = new Record({ a: 1, c: 3 })
+const object = new ABCRecord({ a: 1, c: 3 })
 object.a // 1
 object.c // 3
 object.b // undefined
@@ -134,88 +134,26 @@ object.b // undefined
 
 // Object.keys() also works how you would expect
 Object.keys(object) // [ 'a', 'c' ]
-</code></pre><p>When you try to set or delete a Record's value directly, the Record will throw.</p><pre><code class="language-javascript">const object = new Record({ a: 1, c: 3 })
+</code></pre><p>When you try to set or delete a Record's value directly, the Record will throw.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, c: 3 })
 
 object.b = 2
 // Error: Use the "set" function to update the values of an ImmutableRecord.
 
 delete object.a
 // TypeError: Cannot delete property 'a' of [object Object]
-</code></pre></section><pre><code class="language-javascript">// The ImmutableRecord() function takes an object whose values
-// describe the validation that is applied to the fields.
-const Record = ImmutableRecord({
-  optional: { type: 'string' },
-  required: { required: true },
-  validation: {
-    type: value => value > 5,
-    default: 6
-})
+</code></pre><h4>Record#set()</h4><p>Use the set() function to update Record values. set() returns a new Record instance.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, c: 3 })
 
-// Records behave like Objects
-const object = new Record({
-  requiredField: 'foo'
-})
+const withB = object.set('b', 2)
+withB instanceof ABCRecord // true
+withB.b // 2
 
-// You can retrieve properties as usual
-object.validation // 6
-object.required // 'foo'
-'optional' in object // false
+// The original record is unmodified
+object.b // undefined
+</code></pre><h4>Record#remove()</h4><p>Use the remove() function to remove Record values. remove() returns a new Record instance.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, b: 2, c: 3 })
 
-// To update fields, use the Record#set() function
-// (which returns new Records)
-const other = object.set('optional', 'bar')
-other.optional // 'bar'
-
-// To remove fields, use the Record#remove() function
-const sameAsOriginal = other.remove('optional')
-'optional' in sameAsOriginal // false
-</code></pre><pre><code class="language-javascript">import ImmutableRecord from 'immutable-record'
-
-// If you're not using ES6 modules:
-// const ImmutableRecord = require('immutable-record').default
-
-// The ImmutableRecord() function takes an object whose values
-// describe the validation that is applied to the fields.
-const Record = ImmutableRecord({
-  optional: { type: 'string' },
-  requiredField: {
-    required: true
-  },
-  complexValidation: {
-    type: value => (
-      Array.isArray(value) &&
-      value.length > 1 &&
-      value.length < 6
-    ),
-    default: [ 1, 2 ]
-})
-
-// Records behave like Objects
-const object = new Record({
-  requiredField: 'foo'
-})
-
-// You can retrieve properties as usual
-object.complexValidation // [ 1, 2 ]
-object.requiredField // 'foo'
-object.optional // undefined
-'optional' in object // false
-
-// Record will throw if you try to assign to
-// a property -- Records are immutable
-object.optional = 'bar'
-// Error: Use the "set" function to update the values of an ImmutableRecord.
-
-// To update values, use the immutable Record#set() function
-const other = object.set('optional', 'bar')
-other.optional // 'bar'
-
-// To remove fields, use the Record#remove() function
-const sameAsOriginal = other.remove('optional')
-'optional' in sameAsOriginal // false
-
-// You can't remove required fields
-object.remove('requiredField')
-// Error: "requiredField" is missing from the record {"complexValidation":[1,2]}
-
-</code></pre></div></section><script src="prism.js"></script></body></html>
+const withoutB = object.remove('b')
+withoutB instanceof ABCRecord // true
+withoutB.b // undefined
+</code></pre><h4>A point about validation</h4><p>Records are validated when they are constructed, so all of your fields will be validated
+when you use set() and remove().
+</p></section></div></section><a href="https://github.com/b-gran/immutable-record"><img style="position: absolute; top: 0; right: 0; border: 0" src="https://camo.githubusercontent.com/52760788cde945287fbb584134c4cbc2bc36f904/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f77686974655f6666666666662e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"/></a><script src="prism.js"></script></body></html>
