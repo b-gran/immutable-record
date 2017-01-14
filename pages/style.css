@@ -13,16 +13,25 @@ body {
   max-width: 1100px;
   margin: 0 auto; }
 
+.light p, .light ul > li, .light ol > li {
+  text-shadow: 1px 1px black; }
+
+h1, h2, h3, h4, h5, h6 {
+  text-shadow: 2px 2px black; }
+  h1 > code, h2 > code, h3 > code, h4 > code, h5 > code, h6 > code {
+    font-weight: 400; }
+
+p {
+  line-height: 1.5em; }
+
+h3 {
+  font-size: 1.5em; }
+
 header {
   background: #424242;
   color: #e8e7e3;
   width: 100%;
   padding-bottom: 40px; }
-  header h3 {
-    font-size: 1.5em; }
-
-h1, h2, h3, h4, h5, h6 {
-  text-shadow: 2px 2px black; }
 
 .intro {
   margin: 0;
@@ -41,6 +50,11 @@ h1, h2, h3, h4, h5, h6 {
   .splash-examples > * {
     flex-grow: 1; }
 
+.docs {
+  width: 100%;
+  background: #838cff;
+  color: white; }
+
 :not(pre) > code {
   text-shadow: none;
   border: 1px solid black;
@@ -57,6 +71,9 @@ h1, h2, h3, h4, h5, h6 {
 p > b {
   padding: 0 0.4em; }
 
+@media (min-width: 1101px) {
+  .main {
+    width: 1100px; } }
 @media (max-width: 800px) {
   .main {
     padding: 0 0.5em; } }

@@ -13,6 +13,7 @@ const Record = ImmutableRecord({
 // You just pass ordinary objects to the Record constructor
 const object = new Record({
   someField: { foo: 'bar' }
+  // You don't have to provide optional fields
 })
 </code></pre><pre><code class="language-javascript">// Defaults will be used if no value is provided
 object.foo // 5
@@ -30,7 +31,191 @@ another.optional // 8
 // Validation happens automatically
 object.remove('someField')
 // Error: "someField" is missing from the record {"foo":5}
-</code></pre></div><h3>Why pick<code class="end">immutable-record</code>?</h3><p>Compared to ImmutableJS, the key feature is<b>automatic validation.</b>With<code class="end">immutable-record</code>, you can specify the type of each field and they will be automatically checked.
+</code></pre></div><h3>Why pick<code class="end">immutable-record</code>?</h3><p>Compared to ImmutableJS, the key feature is<b>automatic validation.</b>With<code class="end">immutable-record</code>, you can specify a type of each field and it will be automatically checked.
 Additionally:<ul><li><code class="start">Object.keys()</code>works just how you would expect</li><li>You can mark fields as<code>required</code></li><li>You can create optional fields that may not be present on
-a record, but will validate when set.</li></ul></p></div></header><section class="getting-started"><h1>Getting started</h1><h2>Installing</h2><p><code>immutable-record</code>is available on<code>npm</code>.</p><pre><code>npm install immutable-record
-</code></pre><h2></h2></section><script src="prism.js"></script></body></html>
+a record, but will validate when set.</li></ul></p></div></header><section class="docs"><div class="main light"><h3>Installing</h3><pre><code class="language-bash"># immutable-record is available on npm
+npm install --save immutable-record
+</code></pre><section id="importing"><h3>Importing</h3><pre><code class="language-javascript">import ImmutableRecord from 'immutable-record'
+
+// If you're not using ES6 modules
+const ImmutableRecord = require('immutable-record').default
+</code></pre></section><section id="records"><h3>Creating Records</h3><p>The ImmutableRecord() function takes an object whose values
+describe the validation that is applied to the fields.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  optional: { type: 'string' },
+  required: { required: true },
+  validation: {
+    type: value => value > 5,
+    default: 6
+})
+</code></pre><p>You can also pass a second parameter to the ImmutableRecord() function
+which specifies a custom name for the Record class.
+</p><pre><code class="language-javascript">const Foo = ImmutableRecord({
+    foo: { type: 'string' }
+}, 'Foo')
+Foo.name === 'Foo' // true
+console.log(Foo) // [Function: Foo]
+</code></pre><p>There are three validation options available for each field:<code class="end">type</code>,<code class="end">required</code>, and<code class="end">default</code>.</p><h4>The<code>type</code>option</h4><p>You have two choices for a field's type:</p><ol><li><p>A primitive string (AKA one of the values returned
+by typeof). The possible values at the time of writing are:
+</p><blockquote>'object', 'string', 'number', 'symbol', 'boolean',
+'function', 'undefined'</blockquote></li><li><p>A validation function that takes a single argument (the field's
+value) and returns a boolean.
+</p></li></ol><pre><code class="language-javascript">const Record = ImmutableRecord({
+  // Strings (typeof x === 'string') are valid
+  string: { type: 'string' },
+
+  // Arrays of length 4 or greater are valid
+  array: {
+    type: value => (
+      Array.isArray(value) &&
+      value.length > 3
+    )
+  }
+})
+</code></pre><h4>The<code>default</code>option</h4><p>If a field has a default and a Record is created without the field explicitly set,
+the default value is used automatically.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  withDefault: { default: 5 }
+})
+
+// The default is automatically used if the field isn't set
+const object = new Record({})
+object.withDefault // 5
+
+// undefined is a legal field value, so the default won't be used
+const noDefault = new Record({
+  withDefault: undefined
+})
+noDefault.withDefault // undefined
+</code></pre><h4>The<code>required</code>option</h4><p>Fields marked as "required" must be present on the Record for it to validate.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  required: { required: true },
+  optional: { required: false }
+})
+
+// No problems here
+const object = new Record({
+  required: 1
+})
+'optional' in object // false
+
+// This doesn't work
+const bad = new Record({
+  optional: 1
+})
+// Error: "required" is missing from the record {"optional":1}
+</code></pre><p>If a field is required and it also has a default, the Record will
+still validate even if the field isn't set.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  field: {
+    required: true,
+    default: 5
+  }
+})
+
+// No problems here
+const object = new Record({})
+object.field // 5
+</code></pre><h4>Fields with no options</h4><p>You can also leave the options out to get optional, untyped fields.</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  optionalUntyped: {},
+
+  // setting the field equal to null works too
+  alsoWorks: null
+})
+</code></pre><h3>Using Records</h3><p>Records mostly work just like normal Objects, except they're immutable.</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  a: {}, b: {}, c: {}
+})
+
+const object = new Record({ a: 1, c: 3 })
+object.a // 1
+object.c // 3
+object.b // undefined
+'b' in object // false
+
+// Object.keys() also works how you would expect
+Object.keys(object) // [ 'a', 'c' ]
+</code></pre><p>When you try to set or delete a Record's value directly, the Record will throw.</p><pre><code class="language-javascript">const object = new Record({ a: 1, c: 3 })
+
+object.b = 2
+// Error: Use the "set" function to update the values of an ImmutableRecord.
+
+delete object.a
+// TypeError: Cannot delete property 'a' of [object Object]
+</code></pre></section><pre><code class="language-javascript">// The ImmutableRecord() function takes an object whose values
+// describe the validation that is applied to the fields.
+const Record = ImmutableRecord({
+  optional: { type: 'string' },
+  required: { required: true },
+  validation: {
+    type: value => value > 5,
+    default: 6
+})
+
+// Records behave like Objects
+const object = new Record({
+  requiredField: 'foo'
+})
+
+// You can retrieve properties as usual
+object.validation // 6
+object.required // 'foo'
+'optional' in object // false
+
+// To update fields, use the Record#set() function
+// (which returns new Records)
+const other = object.set('optional', 'bar')
+other.optional // 'bar'
+
+// To remove fields, use the Record#remove() function
+const sameAsOriginal = other.remove('optional')
+'optional' in sameAsOriginal // false
+</code></pre><pre><code class="language-javascript">import ImmutableRecord from 'immutable-record'
+
+// If you're not using ES6 modules:
+// const ImmutableRecord = require('immutable-record').default
+
+// The ImmutableRecord() function takes an object whose values
+// describe the validation that is applied to the fields.
+const Record = ImmutableRecord({
+  optional: { type: 'string' },
+  requiredField: {
+    required: true
+  },
+  complexValidation: {
+    type: value => (
+      Array.isArray(value) &&
+      value.length > 1 &&
+      value.length < 6
+    ),
+    default: [ 1, 2 ]
+})
+
+// Records behave like Objects
+const object = new Record({
+  requiredField: 'foo'
+})
+
+// You can retrieve properties as usual
+object.complexValidation // [ 1, 2 ]
+object.requiredField // 'foo'
+object.optional // undefined
+'optional' in object // false
+
+// Record will throw if you try to assign to
+// a property -- Records are immutable
+object.optional = 'bar'
+// Error: Use the "set" function to update the values of an ImmutableRecord.
+
+// To update values, use the immutable Record#set() function
+const other = object.set('optional', 'bar')
+other.optional // 'bar'
+
+// To remove fields, use the Record#remove() function
+const sameAsOriginal = other.remove('optional')
+'optional' in sameAsOriginal // false
+
+// You can't remove required fields
+object.remove('requiredField')
+// Error: "requiredField" is missing from the record {"complexValidation":[1,2]}
+
+</code></pre></div></section><script src="prism.js"></script></body></html>
