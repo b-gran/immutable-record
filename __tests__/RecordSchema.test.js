@@ -124,7 +124,25 @@ describe('RecordSchema', () => {
         a: { enumerable: 0 }
       }).not.toBeValidSchema();
     });
-    
+
+    it(`allows defaults that validate according to the type`, () => {
+      expect({
+        a: {
+          type: 'string',
+          default: 'a'
+        }
+      }).toBeValidSchema();
+    });
+
+    it(`throws if a default doesn't validate according to the type`, () => {
+      expect({
+        a: {
+          type: 'string',
+          default: 5
+        }
+      }).not.toBeValidSchema();
+    });
+
   });
 
   describe('hasProperty()', () => {
@@ -171,7 +189,8 @@ describe('RecordSchema', () => {
       },
       b: {
         type: b => b > 5
-      }
+      },
+      c: {}
     });
 
     it(`throws (with explanation) if the input is invalid`, () => {
@@ -193,7 +212,26 @@ describe('RecordSchema', () => {
     });
 
     it(`returns true if the input is valid`, () => {
-      expect(schema.validateInput({ a: '' })).toBe(true);
+      expect(
+        schema.validateInput({
+          a: ''
+        })
+      ).toBe(true);
+
+      expect(
+        schema.validateInput({
+          a: '',
+          c: 'anything'
+        })
+      ).toBe(true);
+
+      expect(
+        schema.validateInput({
+          a: '',
+          b: 6,
+          c: 'anything'
+        })
+      ).toBe(true);
     });
 
   });

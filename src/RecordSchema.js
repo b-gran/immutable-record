@@ -186,11 +186,11 @@ function isFieldRequired (key, schema) {
  */
 function validateRecordSchema (recordSchema) {
   if (!_.isPlainObject(recordSchema)) {
-    throw new Error('A RecordSchema must be a plain object.')
+    throw new RecordSchemaValidationError('A RecordSchema must be a plain object.')
   }
 
   if (isEmptyObject(recordSchema)) {
-    throw new Error(`A RecordSchema must be a plain object with 0 enumerable keys.`)
+    throw new RecordSchemaValidationError(`A RecordSchema must be a plain object with 0 enumerable keys.`)
   }
 
   // Every value must be individually valid
@@ -279,7 +279,7 @@ function isRecordSchemaValue (recordSchemaValue) {
 
   // Any enumerable key other than 'type', 'default', or 'required' is invalid
   if (doesSchemaValueContainInvalidKeys(recordSchemaValue)) {
-    throw new Error(`${JSON.stringify(recordSchemaValue)} contains an invalid key.`);
+    throw new RecordSchemaValidationError(`${JSON.stringify(recordSchemaValue)} contains an invalid key.`);
   }
 
   // Test type, default, and required for individual correctness.
@@ -290,7 +290,7 @@ function isRecordSchemaValue (recordSchemaValue) {
         return true;
       }
 
-      throw new Error(`"type" is invalid.`);
+      throw new RecordSchemaValidationError(`"type" is invalid.`);
     },
 
     'default': function (defaultValue) {
@@ -302,13 +302,13 @@ function isRecordSchemaValue (recordSchemaValue) {
         return true;
       }
 
-      throw new Error(`"required" is invalid.`)
+      throw new RecordSchemaValidationError(`"required" is invalid.`)
     }
   })(recordSchemaValue);
 
   if (!individuallyCorrectValues) {
-    // Shouldn't get here.
-    throw new Error(`${JSON.stringify(recordSchemaValue)} contains an invalid value.`);
+    // Shouldn't get here -- the key validators should just throw themselves.
+    throw new RecordSchemaValidationError(`${JSON.stringify(recordSchemaValue)} contains an invalid value.`);
   }
 
   // If it doesn't have a type AND a default, we're done.
@@ -319,7 +319,7 @@ function isRecordSchemaValue (recordSchemaValue) {
   // If type and default are both specified, make sure the default validates
   // according to the type.
   if (!isValidForType(recordSchemaValue.type, recordSchemaValue.default)) {
-    throw new Error(`The default value is not valid according to the type.`);
+    throw new RecordSchemaValidationError(`The default value is not valid according to the type.`);
   }
 
   return true;
@@ -371,6 +371,11 @@ function doesSchemaValueContainInvalidKeys (schemaValue) {
 function isValidForType (type, value) {
   switch (typeof type) {
     // If the definition has no type, every value is valid.
+    //
+    // Note: a RecordSchema is not allowed to have a type equal to undefined.
+    // This function still has a case for undefined because this function
+    // can't distinguish between a type of undefined and a key actually
+    // not be being present.
     case 'undefined':
       return true;
 
