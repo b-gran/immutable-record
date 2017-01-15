@@ -4,6 +4,11 @@
   "description": "Create immutable records a-la `Record` in Facebook's Immutable.js",
   "main": "index.js",
   "scripts": {
+    "vendor": "cp pages/prism.* dist",
+    "clean": "rm -r ./dist",
+    "styles": "node-sass --output-style compressed pages/style.scss dist/style.css",
+    "views": "pug pages/index.pug --out dist/",
+    "build-pages": "npm run clean && npm run styles && npm run views && npm run vendor",
     "test": "jest",
     "build": "gulp production"
   },
@@ -41,6 +46,7 @@
     "gulp-uglify": "^2.0.0",
     "gulp-util": "^3.0.7",
     "jest": "^17.0.3",
+    "node-sass": "^4.3.0",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
     "run-sequence": "^1.2.2",
