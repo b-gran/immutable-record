@@ -152,4 +152,4 @@ function sameSet (source, dest) {
 }
 
 // So jest won't complain when it tries to run this file.
-describe.skip('', null);
+describe.skip('', () => it.skip(``, null));
