@@ -1,0 +1,159 @@
+<html><head><title>immutable-record -- typed & immutable plain JS objects</title><link rel="stylesheet" href="style.css"/><link rel="stylesheet" href="prism.css"/><link href="https://fonts.googleapis.com/css?family=Bungee+Shade|Nunito+Sans" rel="stylesheet"/><link href="https://fonts.googleapis.com/css?family=Amatic+SC" rel="stylesheet"/></head><body><header><h1 class="intro">immutable-record &nbsp;&mdash; &nbsp; plain immutable Javascript objects with validation</h1><div class="main"><p><code class="start">immutable-record</code>is a small JavaScript library inspired by Facebook's ImmutableJS
+that allows you to create immutable<code class="end">Records</code>.<code>Records</code>behave very much like Objects (even<code class="end">Object.keys()</code>), but they are immutable and have automatic type validation.</p><h3>What does it look like?</h3><div class="splash-examples"><pre><code class="language-javascript">// ImmutableRecord() returns a Record class
+import ImmutableRecord from 'immutable-record'
+const Record = ImmutableRecord({
+  foo: { default: 5 },
+  optional: { type: 'number' }
+  someField: {
+    type: value => 'foo' in value,
+    required: true
+  },
+})
+
+// You just pass ordinary objects to the Record constructor
+const object = new Record({
+  someField: { foo: 'bar' }
+  // You don't have to provide optional fields
+})
+</code></pre><pre><code class="language-javascript">// Defaults will be used if no value is provided
+object.foo // 5
+
+// Object.keys() works as if the Record was a normal Object
+Object.keys(object) // [ 'foo', 'someField' ]
+
+// Records are immutable, so Record#set() returns a new Record
+const another = object.set('optional', 8)
+another.optional // 8
+
+// The original Record is unmodified
+'optional' in object // false
+
+// Validation happens automatically
+object.remove('someField')
+// Error: "someField" is missing from the record {"foo":5}
+</code></pre></div><h3>Why pick<code class="end">immutable-record</code>?</h3><p>Compared to ImmutableJS, the key feature is<b>automatic validation.</b>With<code class="end">immutable-record</code>, you can specify a type of each field and it will be automatically checked.
+Additionally:<ul><li><code class="start">Object.keys()</code>works just how you would expect</li><li>You can mark fields as<code>required</code></li><li>You can create optional fields that may not be present on
+a record, but will validate when set.</li></ul></p></div></header><section class="docs"><div class="main light"><h3>Installing</h3><pre><code class="language-bash"># immutable-record is available on npm
+npm install --save immutable-record
+</code></pre><section id="importing"><h3>Importing</h3><pre><code class="language-javascript">import ImmutableRecord from 'immutable-record'
+
+// If you're not using ES6 modules
+const ImmutableRecord = require('immutable-record').default
+</code></pre></section><section id="records"><h3>Creating Records</h3><p>The ImmutableRecord() function takes an object whose values
+describe the validation that is applied to the fields.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  optional: { type: 'string' },
+  required: { required: true },
+  validation: {
+    type: value => value > 5,
+    default: 6
+})
+</code></pre><p>You can also pass a second parameter to the ImmutableRecord() function
+which specifies a custom name for the Record class.
+</p><pre><code class="language-javascript">const Foo = ImmutableRecord({
+    foo: { type: 'string' }
+}, 'Foo')
+Foo.name === 'Foo' // true
+console.log(Foo) // [Function: Foo]
+</code></pre><p>There are three validation options available for each field:<code class="end">type</code>,<code class="end">required</code>, and<code class="end">default</code>.</p><h4>The<code>type</code>option</h4><p>You have two choices for a field's type:</p><ol><li><p>A primitive string (AKA one of the values returned
+by typeof). The possible values at the time of writing are:
+</p><blockquote>'object', 'string', 'number', 'symbol', 'boolean',
+'function', 'undefined'</blockquote></li><li><p>A validation function that takes a single argument (the field's
+value) and returns a boolean.
+</p></li></ol><pre><code class="language-javascript">const Record = ImmutableRecord({
+  // Strings (typeof x === 'string') are valid
+  string: { type: 'string' },
+
+  // Arrays of length 4 or greater are valid
+  array: {
+    type: value => (
+      Array.isArray(value) &&
+      value.length > 3
+    )
+  }
+})
+</code></pre><h4>The<code>default</code>option</h4><p>If a field has a default and a Record is created without the field explicitly set,
+the default value is used automatically.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  withDefault: { default: 5 }
+})
+
+// The default is automatically used if the field isn't set
+const object = new Record({})
+object.withDefault // 5
+
+// undefined is a legal field value, so the default won't be used
+const noDefault = new Record({
+  withDefault: undefined
+})
+noDefault.withDefault // undefined
+</code></pre><h4>The<code>required</code>option</h4><p>Fields marked as "required" must be present on the Record for it to validate.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  required: { required: true },
+  optional: { required: false }
+})
+
+// No problems here
+const object = new Record({
+  required: 1
+})
+'optional' in object // false
+
+// This doesn't work
+const bad = new Record({
+  optional: 1
+})
+// Error: "required" is missing from the record {"optional":1}
+</code></pre><p>If a field is required and it also has a default, the Record will
+still validate even if the field isn't set.
+</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  field: {
+    required: true,
+    default: 5
+  }
+})
+
+// No problems here
+const object = new Record({})
+object.field // 5
+</code></pre><h4>Fields with no options</h4><p>You can also leave the options out to get optional, untyped fields.</p><pre><code class="language-javascript">const Record = ImmutableRecord({
+  optionalUntyped: {},
+
+  // setting the field equal to null works too
+  alsoWorks: null
+})
+</code></pre><h3>Using Records</h3><p>Records mostly work just like normal Objects, except they're immutable.</p><pre><code class="language-javascript">const ABCRecord = ImmutableRecord({
+  a: {}, b: {}, c: {}
+})
+
+const object = new ABCRecord({ a: 1, c: 3 })
+object.a // 1
+object.c // 3
+object.b // undefined
+'b' in object // false
+
+// Object.keys() also works how you would expect
+Object.keys(object) // [ 'a', 'c' ]
+</code></pre><p>When you try to set or delete a Record's value directly, the Record will throw.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, c: 3 })
+
+object.b = 2
+// Error: Use the "set" function to update the values of an ImmutableRecord.
+
+delete object.a
+// TypeError: Cannot delete property 'a' of [object Object]
+</code></pre><h4>Record#set()</h4><p>Use the set() function to update Record values. set() returns a new Record instance.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, c: 3 })
+
+const withB = object.set('b', 2)
+withB instanceof ABCRecord // true
+withB.b // 2
+
+// The original record is unmodified
+object.b // undefined
+</code></pre><h4>Record#remove()</h4><p>Use the remove() function to remove Record values. remove() returns a new Record instance.</p><pre><code class="language-javascript">const object = new ABCRecord({ a: 1, b: 2, c: 3 })
+
+const withoutB = object.remove('b')
+withoutB instanceof ABCRecord // true
+withoutB.b // undefined
+</code></pre><h4>A point about validation</h4><p>Records are validated when they are constructed, so all of your fields will be validated
+when you use set() and remove().
+</p></section></div></section><a href="https://github.com/b-gran/immutable-record"><img style="position: absolute; top: 0; right: 0; border: 0" src="https://camo.githubusercontent.com/52760788cde945287fbb584134c4cbc2bc36f904/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f77686974655f6666666666662e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"/></a><script src="prism.js"></script></body></html>
