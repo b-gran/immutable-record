@@ -1,7 +1,7 @@
 {
   "name": "immutable-record",
   "version": "1.0.1",
-  "description": "Create immutable records a-la `Record` in Facebook's Immutable.js",
+  "description": "Typed immutable Records inspired by ImmutableJS",
   "main": "index.js",
   "scripts": {
     "vendor": "cp pages/prism.* pages-build",

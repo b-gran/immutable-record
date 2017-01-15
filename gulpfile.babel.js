@@ -7,6 +7,10 @@ import sourcemaps from 'gulp-sourcemaps';
 import uglify from 'gulp-uglify';
 import plumber from 'gulp-plumber';
 
+import source from 'vinyl-source-stream';
+import buffer from 'vinyl-buffer';
+import Stream from 'stream';
+
 /* Rollup */
 const rollup = require('rollup');
 import rollupBabel from 'rollup-plugin-babel';
@@ -222,6 +226,28 @@ gulp.task('watch', () => {
     );
 });
 
+/**
+ * A basic stream that just passes along its input.
+ * The input can be anything. If it's a non-Buffer, it will be converted to one.
+ *
+ * @param {*} contents
+ * @constructor
+ */
+function BufferStream (contents) {
+  if (!this) {
+      return new BufferStream(contents);
+  }
+
+  Stream.PassThrough.call(this);
+
+  const buffer = Buffer.isBuffer(contents)
+    ? contents
+    : new Buffer(contents);
+
+  this.end(buffer);
+}
+BufferStream.prototype = Stream.PassThrough.prototype;
+
 // Bundle the application for distribution to npm
 gulp.task('bundle:npm', done => {
     rollup.rollup({
@@ -236,16 +262,20 @@ gulp.task('bundle:npm', done => {
         ],
     }).then(bundle => {
         // bundle with CommonJS es5 output
-        // write to dist
-        return bundle.write({
-            format: 'cjs',
-            dest: config.npm.bundlePath,
-        });
-    }).then(() => {
-        return done();
-    }).catch(err => {
-        return done(err);
-    })
+        const fileContents = bundle.generate({
+          format: 'cjs'
+        }).code;
+
+        // Write minified bundle to the path in config
+        new BufferStream(fileContents)
+          .pipe(source(config.npm.bundlePath))
+          .pipe(buffer())
+          .pipe(uglify())
+          .pipe(gulp.dest('.'))
+
+          .on('end', done)
+          .on('error', done);
+    });
 });
 
 // Prepare the already-built dist directory for publishing to npm.
