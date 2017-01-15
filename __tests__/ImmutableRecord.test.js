@@ -459,4 +459,117 @@ describe('Record', () => {
 
   });
 
+  expect.extend({
+
+    /**
+     * Given a record instance, checks the instance's prototype
+     * to make sure it is (functionally) a Record.
+     *
+     * @param {Object} record
+     * @return {{pass: *, message: string}}
+     */
+    toBeRecord (record) {
+      const isRecord = _.overEvery([
+        isDefined,
+
+        _.flow(
+          Object.getPrototypeOf,
+          _.overEvery([
+            propertyIsFunction('set'),
+            propertyIsFunction('remove')
+          ])
+        )
+      ])(record);
+
+      const not = isRecord
+        ? 'not '
+        : '';
+
+      return {
+        pass: isRecord,
+        message: `Expected ${JSON.stringify(record)} to ${not}be a Record`
+      };
+    }
+
+  });
+
+  /*
+   * Verify we can subclass Record using several methods.
+   */
+  describe(`subclasses`, () => {
+    const Record = ImmutableRecord({ a: {} });
+    Object.preventExtensions(Record.prototype);
+
+    test(`ES6 subclass`, () => {
+      class Sub extends Record {
+        method () {
+          return this.a;
+        }
+      }
+
+      // Sanity
+      expect(Object.getPrototypeOf(Sub)).toBe(Record);
+
+      const a = {};
+      const instance = new Sub({ a: a });
+      expect(instance).toBeRecord();
+      expect(instance.method()).toBe(a);
+      expect(instance).toBeInstanceOf(Sub);
+      expect(instance).toBeInstanceOf(Record);
+
+      const removed = instance.remove('a');
+      expect(removed).toBeRecord();
+      expect(removed.method()).toBeUndefined();
+      expect(removed).toBeInstanceOf(Sub);
+      expect(removed).toBeInstanceOf(Record);
+    });
+
+    test(`ES5 subclass`, () => {
+      function Sub () {
+        Record.apply(this, arguments)
+      }
+      Sub.prototype = Object.create(Record.prototype);
+      Sub.prototype.constructor = Sub;
+      Sub.prototype.method = function () {
+        return this.a;
+      };
+
+      // Sanity
+      expect(Sub.prototype).toBeInstanceOf(Record);
+
+      const a = {};
+      const instance = new Sub({ a: a });
+      expect(instance).toBeRecord();
+      expect(instance.method()).toBe(a);
+      expect(instance).toBeInstanceOf(Sub);
+      expect(instance).toBeInstanceOf(Record);
+
+      const removed = instance.remove('a');
+      expect(removed).toBeRecord();
+      expect(removed.method()).toBeUndefined();
+      expect(removed).toBeInstanceOf(Sub);
+      expect(removed).toBeInstanceOf(Record);
+    });
+
+  });
+
 });
+
+/**
+ * Returns true if the first argument passed is not undefined.
+ * @type {function(*): boolean}
+ * @return {boolean}
+ */
+const isDefined = _.negate(_.isUndefined);
+
+/**
+ * Given a property name, returns a function that takes an object
+ * and returns true if the value at "property" is a function.
+ *
+ * @param {String} property
+ * @return {function(String):function({}):boolean}
+ */
+const propertyIsFunction = property => _.flow(
+  _.property(property),
+  _.isFunction
+);

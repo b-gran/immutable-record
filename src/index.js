@@ -53,13 +53,13 @@ function ImmutableRecord (shape, name) {
   Record.prototype.set = function (property, newValue) {
     assertValidProperty(schema, property);
 
-    return new Record(
+    return getRecordConstructor(this)(
       update(
         privates.get(this),
         property,
         newValue
       )
-    )
+    );
   };
 
   /**
@@ -78,12 +78,12 @@ function ImmutableRecord (shape, name) {
     assertValidProperty(schema, property);
 
     // TODO: better way to do this?
-    return new Record(
+    return getRecordConstructor(this)(
       _.omit(
         privates.get(this),
         [ property ]
       )
-    )
+    );
   };
 
   function toString () {
@@ -102,6 +102,27 @@ function ImmutableRecord (shape, name) {
   Record.prototype.inspect = toString;
 
   return Record;
+}
+
+/**
+ * Given a Record instance, returns a function that returns new Records
+ * based on the instance's constructor.
+ *
+ * This function is used for chaining:
+ * if a consumer has subclassed Record, we want to make sure our chain
+ * functions returns instances of the subclass (and not vanilla Records).
+ *
+ * The returned function passes all of the arguments to the instance's
+ * constructor.
+ *
+ * @param {Object} recordInstance
+ * @return {function(...*): *}
+ */
+function getRecordConstructor (recordInstance) {
+  const Konstructor = Object.getPrototypeOf(recordInstance).constructor;
+  return function () {
+    return new (Function.prototype.bind.apply(Konstructor, [ null, ...arguments ]));
+  }
 }
 
 /**
