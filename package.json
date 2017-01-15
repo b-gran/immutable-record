@@ -1,6 +1,6 @@
 {
   "name": "immutable-record",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create immutable records a-la `Record` in Facebook's Immutable.js",
   "main": "index.js",
   "scripts": {
