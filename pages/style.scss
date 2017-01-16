@@ -19,14 +19,9 @@ body {
 }
 
 .light {
-  p, ul > li, ol > li  {
-    text-shadow: 1px 1px black;
-  }
 }
 
 h1, h2, h3, h4, h5, h6 {
-  text-shadow: 2px 2px black;
-
   > code {
     font-weight: 400;
   }
@@ -75,8 +70,8 @@ header {
 
 .docs {
   width: 100%;
-  background: #838cff;
-  color: white;
+  background: #94e8b2;
+  color: black;
 }
 
 :not(pre) > code {
