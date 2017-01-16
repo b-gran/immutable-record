@@ -15,7 +15,7 @@ const Record = ImmutableRecord({
   optional: { type: 'number' }
   someField: {
     type: value => 'foo' in value,
-    equired: true
+    required: true
   },
 })
 
