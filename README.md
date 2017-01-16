@@ -1,9 +1,9 @@
-## `immutable-record` -- plain, immutable Javascript objects with validation
+## `immutable-record` -- typed & immutable Javascript objects
 
 `immutable-record` is a small JavaScript library inspired by Facebook's ImmutableJS
-that allows you to create immutable `Records`. `Records` behave very much like
-Objects (even `Object.keys()`), but they are immutable and have automatic type
-validation.
+that allows you to create immutable `Records`.
+`Records` behave very much like Objects (even `Object.keys()`), but they are 
+typed and immutable.
 
 ### What does it look like?
 
