@@ -1,6 +1,6 @@
 {
   "name": "immutable-record",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Typed immutable Records inspired by ImmutableJS",
   "main": "index.js",
   "scripts": {
