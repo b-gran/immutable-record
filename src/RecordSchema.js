@@ -190,7 +190,7 @@ function validateRecordSchema (recordSchema) {
   }
 
   if (isEmptyObject(recordSchema)) {
-    throw new RecordSchemaValidationError(`A RecordSchema must be a plain object with 0 enumerable keys.`)
+    throw new RecordSchemaValidationError(`A RecordSchema must be a plain object with more than 0 enumerable keys.`)
   }
 
   // Every value must be individually valid
