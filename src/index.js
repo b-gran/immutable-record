@@ -77,11 +77,10 @@ function ImmutableRecord (shape, name) {
   Record.prototype.remove = function (property) {
     assertValidProperty(schema, property);
 
-    // TODO: better way to do this?
     return getRecordConstructor(this)(
-      _.omit(
+      unsetField(
         privates.get(this),
-        [ property ]
+        property
       )
     );
   };
@@ -126,10 +125,13 @@ function getRecordConstructor (recordInstance) {
 }
 
 /**
- * Immutably update a single top-level field of a plain object.
+ * Immutably update a single top-level field of an object.
  *
- * Specifically: given a plain object, a field name, and a value, returns a new object identical
- * to the original object except with the field set to the value.
+ * Specifically: given an object, a field name, and a value, returns a new
+ * object identical to the original object except with the field set to the
+ * value.
+ *
+ * This function operates on a shallow clone of the object.
  *
  * @param {Object} object
  * @param {String} field
@@ -137,16 +139,37 @@ function getRecordConstructor (recordInstance) {
  * @return {Object}
  */
 function update (object, field, value) {
-  if (!_.isPlainObject(object)) {
-    return object
+  if (!_.isObject(object)) {
+    return object;
   }
 
   return _.set(
-    // TODO: slow for large objects, maybe rethink this?
-    _.cloneDeep(object),
+    _.clone(object),
     field,
     value
-  )
+  );
+}
+
+/**
+ * Immutably remove a single top-level field of an object.
+ *
+ * Specifically: given an object and a field name, returns a new
+ * object identical to the original object except with the field removed.
+ *
+ * This function operates on a shallow clone of the object.
+ *
+ * @param {Object} object
+ * @param {String} field
+ * @return {Object}
+ */
+function unsetField (object, field) {
+  if (!_.isObject(object)) {
+    return object;
+  }
+
+  const shallowClone = _.clone(object);
+  _.unset(shallowClone, field);
+  return shallowClone;
 }
 
 /**
