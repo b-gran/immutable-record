@@ -1,5 +1,7 @@
 ## `immutable-record` -- typed & immutable Javascript objects
 
+[![Build Status](https://travis-ci.org/b-gran/immutable-record.svg?branch=master)](https://travis-ci.org/b-gran/immutable-record) [![npm version](https://badge.fury.io/js/immutable-record.svg)](https://badge.fury.io/js/immutable-record)
+
 `immutable-record` is a small JavaScript library inspired by Facebook's ImmutableJS
 that allows you to create immutable `Records`.
 `Records` behave very much like Objects (even `Object.keys()`), but they are 
